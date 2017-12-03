@@ -20,13 +20,13 @@ def latlong(dataframe, address, latitude, longitude):
                                                dataframe[longitude].isnull()].shape[0]
         for index, row in dataframe.iterrows():
             if pd.isnull(row[latitude]) or pd.isnull(row[longitude]):
-                url = 'https://maps.googleapis.com/maps/api/geocode/json?address='
-                url = url + row[address].replace(' ', '+')
-                response = requests.get(url)
-                resp_json_payload = response.json()
-                if len(resp_json_payload['results']) != 0:
-                    dataframe.loc[index, longitude] = resp_json_payload['results'][0]['geometry']['location']['lng']
-                    dataframe.loc[index, latitude] = resp_json_payload['results'][0]['geometry']['location']['lat']
+                url = 'https://maps.googleapis.com/maps/api/geocode/json'
+                params = {'sensor': 'false', 'address': row[address]}
+                request = requests.get(url, params=params)
+                response = request.json()
+                if len(response['results']) != 0:
+                    dataframe.loc[index, longitude] = response['results'][0]['geometry']['location']['lng']
+                    dataframe.loc[index, latitude] = response['results'][0]['geometry']['location']['lat']
         no_latlong_count_end = dataframe.loc[dataframe[latitude].isnull() | dataframe[longitude].isnull()].shape[0]
         if no_latlong_count_start == no_latlong_count_end:
             break
