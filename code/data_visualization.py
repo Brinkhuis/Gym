@@ -5,7 +5,7 @@ Plot data on Google Maps
 # imports
 import pandas as pd
 from bokeh.io import output_file, show
-from bokeh.models import (GMapPlot, GMapOptions, ColumnDataSource, Circle, DataRange1d,
+from bokeh.models import (GMapPlot, GMapOptions, ColumnDataSource, Circle, Range1d,
                           PanTool, WheelZoomTool, BoxSelectTool, HoverTool)
 
 # read data
@@ -26,7 +26,7 @@ MAP_CENTER_LAT = (max(GYM['latitude']) + min(GYM['latitude'])) / 2
 MAP_CENTER_LNG = (max(GYM['longitude']) + min(GYM['longitude'])) / 2
 MAP_OPTIONS = GMapOptions(lat=MAP_CENTER_LAT, lng=MAP_CENTER_LNG, map_type='roadmap', zoom=8)
 
-PLOT = GMapPlot(x_range=DataRange1d(), y_range=DataRange1d(), map_options=MAP_OPTIONS)
+PLOT = GMapPlot(x_range=Range1d(), y_range=Range1d(), map_options=MAP_OPTIONS)
 PLOT.api_key = API_KEY
 SOURCE = ColumnDataSource(data=dict(lat=GYM['latitude'], lng=GYM['longitude'], addr=GYM['address'],
                                     col=GYM['color'], company=GYM['company']))
