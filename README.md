@@ -4,4 +4,4 @@ Comparing the geographic distribution of gym locations of two large fitness comp
 
 For the interactive plot, click [here](https://nbviewer.jupyter.org/github/Brinkhuis/Gym/blob/master/notebook/data_visualization.ipynb).
 
-![](../images/gym_map.png)
+![](images/gym_map.png)
