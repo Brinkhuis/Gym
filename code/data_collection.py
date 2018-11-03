@@ -13,7 +13,7 @@ URL = 'https://www.basic-fit.com/nl-nl/sportscholen'
 SOUP = BeautifulSoup(requests.get(URL).content, 'lxml')
 GYM_URL = list()
 LINKS = SOUP.find_all('a')
-for link in tqdm(LINKS):
+for link in (LINKS):
     if link['href'].startswith('/nl-nl/sportscholen/'):
         GYM_URL.append('https://www.basic-fit.com' + link['href'])
 GYM_URL = GYM_URL[3:-6]
@@ -46,4 +46,4 @@ FFF = pd.DataFrame({'company': 'Fit For Free',
 GYM = pd.concat([BF, FFF])
 
 # save data to file
-GYM.to_csv('data/gym_raw_test.csv', sep=';', index=False)
+GYM.to_csv('data/gym_raw.csv', sep=';', index=False)

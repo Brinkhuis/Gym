@@ -4,66 +4,48 @@ Data preparation
 
 # imports
 import pandas as pd
-import requests
-
-# functions
-def latlong(dataframe, address, latitude, longitude):
-    """
-    Function for finding and storing latitude and longitude for a given address
-    dataframe: pandas DataFrame containing addresses
-    address: name of the column in the DataFrame containing the addresses
-    latitude: name of the column to store latitude
-    longitude: name of the column to stor longitude
-    """
-    while dataframe.isnull().values.any():
-        no_latlong_count_start = dataframe.loc[dataframe[latitude].isnull() |
-                                               dataframe[longitude].isnull()].shape[0]
-        for index, row in dataframe.iterrows():
-            if pd.isnull(row[latitude]) or pd.isnull(row[longitude]):
-                url = 'https://maps.googleapis.com/maps/api/geocode/json'
-                params = {'sensor': 'false', 'address': row[address]}
-                request = requests.get(url, params=params)
-                response = request.json()
-                if len(response['results']) != 0:
-                    dataframe.loc[index, longitude] = response['results'][0]['geometry']['location']['lng']
-                    dataframe.loc[index, latitude] = response['results'][0]['geometry']['location']['lat']
-        no_latlong_count_end = dataframe.loc[dataframe[latitude].isnull() | dataframe[longitude].isnull()].shape[0]
-        if no_latlong_count_start == no_latlong_count_end:
-            break
-
-def validate():
-    """
-    Helper function to print message when latitudes and longitudes are found
-    for all provided addressed or print addresses to be modified.
-    """
-    if GYM.loc[GYM['latitude'].isnull() | GYM['longitude'].isnull()].shape[0] == 0:
-        print('Congrates, no missing latitudes or longitudes!')
-    else:
-        print(GYM.loc[GYM['latitude'].isnull() | GYM['longitude'].isnull()].address)
+import geocoder
+import re
 
 # read data
-GYM = pd.read_csv('data/gym_raw.csv', sep=';')
+df = pd.read_csv('data/gym_raw.csv', sep=';')
 
-# add columns for storing latitude and longitude
-GYM['latitude'] = None
-GYM['longitude'] = None
+# correct data
+df.loc[df['address'] == 'Stadionplein (ingang 18) 2, 5616RX EINDHOVEN', ['address']] = 'Stadionplein 2, 5616RX EINDHOVEN'
+df.loc[df['address'] == 'Bislet 11, 7825SB EMMEN', ['address']] = 'Bislett 11, 7825SB EMMEN'
+df.loc[df['address'] == 'Antillenstraat 7 E-H, 9714JT GRONINGEN', ['address']] = 'Antillenstraat 7E, 9714JT GRONINGEN'
+df.loc[df['address'] == 'Zwaagdijk 467A, 1689PC HOORN', ['address']] = 'Zwaagdijk 467A, 1689PC ZWAAG'
+df.loc[df['address'] == 'C. van der Doesstraat 22 1e Etage, 1972AT IJMUIDEN', ['address']] = 'C. van der Doesstraat 22, 1972AT IJMUIDEN'
+df.loc[df['address'] == 'Martin Luther Kingweg 205-207, 1504DG ZAANDAM', ['address']] = 'Dominee Martin Luther Kingweg 205, 1504DG ZAANDAM'
+df.loc[df['address'] == 'Menno Simonszplein 22, Haarlem', ['address']] = 'Menno Simonszweg 22, Haarlem'
 
-# get latitude and longitude
-latlong(GYM, 'address', 'latitude', 'longitude')
+# add columns for latitude and longitude
+df['x'] = None
+df['y'] = None
+
+# helper function
+def verwijder_postcode(adres):
+    pattern = '[0-9][0-9][0-9][0-9][A-Z][A-Z]'
+    fa = re.findall(pattern, adres)
+    if len(fa) != 0:
+        i = adres.find(fa[0])
+        j = i + 7
+        nieuw_adres = f'{adres[:i]}{adres[j:]}'
+    else:
+        nieuw_adres = adres
+    return nieuw_adres
+
+# get latitude and longitude 
+for index, row in df.iterrows():
+    try:
+        a = verwijder_postcode(row.address)
+        g = geocoder.osm(a).osm
+        df.loc[index, ['x']] = g['x']
+        df.loc[index, ['y']] = g['y']
+    except:
+        pass
 
 # save data
-GYM.to_csv('data/gym_geo.csv', sep=';', index=False)
-
-# validate data
-validate()
-
-# modify data
-GYM.loc[GYM['address'] == 'Stadionplein (ingang 18) 2, 5616RX EINDHOVEN', ['address']] = 'Stadionplein 2, 5616RX EINDHOVEN'
-
-# get latitude and longitude
-latlong(GYM, 'address', 'latitude', 'longitude')
-
-validate()
-# validate data
-
-GYM.to_csv('data/gym.csv', sep=';', index=False)
+file_name = 'data/gym_geo.csv'
+df.to_csv(file_name, sep=';', index=False)
+print(f'Data saved to {file_name}')
