@@ -1,40 +1,38 @@
 """
-Plot data on Google Maps
+Plot data on a map
 """
 
-# imports
+# import modules
 import pandas as pd
-from bokeh.io import output_file, show
-from bokeh.models import (GMapPlot, GMapOptions, ColumnDataSource, Circle, Range1d,
-                          PanTool, WheelZoomTool, BoxSelectTool, HoverTool)
+import folium# pip install folium
+from folium.plugins import MarkerCluster
 
 # read data
-GYM = pd.read_csv('data/gym.csv', sep=';')
+gym = pd.read_csv('data/gym_geo.csv', sep=';')
 
-# add color per company
-GYM['color'] = GYM['company'].apply(lambda x: 'red' if x == 'Fit For Free' else 'blue')
+# dict of dicts for gym attributes
+attribs = {'Basic-Fit'   : {'url': 'www.basic-fit.com',
+                            'icon_url': 'http://res.cloudinary.com/brinkhuis/image/upload/v1512746206/basicfit_wexzjg.png',
+                            'icon_size': (84, 28)}, 
+           'Fit For Free': {'url': 'https://www.fitforfree.nl',
+                            'icon_url': 'http://res.cloudinary.com/brinkhuis/image/upload/v1512745660/fitforfree_wo2t4c.png',
+                            'icon_size': (42, 42)}}
 
-# For GMaps to function, Google requires you obtain and enable an API key:
-#
-#     https://developers.google.com/maps/documentation/javascript/get-api-key
-#
-# Replace the value below with your personal API key:
+# create map
+m = folium.Map(location=[52.07, 5.12], zoom_start=12, tiles='Stamen Terrain')
 
-API_KEY = '-- Replace this value with your personal API key --'
+# marker cluster
+marker_cluster = MarkerCluster().add_to(m)
 
-MAP_CENTER_LAT = (max(GYM['latitude']) + min(GYM['latitude'])) / 2
-MAP_CENTER_LNG = (max(GYM['longitude']) + min(GYM['longitude'])) / 2
-MAP_OPTIONS = GMapOptions(lat=MAP_CENTER_LAT, lng=MAP_CENTER_LNG, map_type='roadmap', zoom=8)
+# add markers
+for i in range(gym.shape[0]):
+    folium.Marker([gym.iloc[i].y, gym.iloc[i].x],
+                  icon=folium.features.CustomIcon(attribs[gym.iloc[i].company]['icon_url'],
+                                                  icon_size=attribs[gym.iloc[i].company]['icon_size']),
+                  popup='<b>' + gym.iloc[i].company.upper() + '</b><br>'
+                  + '<i>'+ gym.iloc[i].address.split(', ')[0] + '</i><br>'
+                  + '<i>' + gym.iloc[i].address.split(', ')[1] + '</i><br>'
+                  + '<a href={0} target="_blank"</a>{0}'.format(attribs[gym.iloc[i].company]['url'])).add_to(marker_cluster)
 
-PLOT = GMapPlot(x_range=Range1d(), y_range=Range1d(), map_options=MAP_OPTIONS)
-PLOT.api_key = API_KEY
-SOURCE = ColumnDataSource(data=dict(lat=GYM['latitude'], lng=GYM['longitude'], addr=GYM['address'],
-                                    col=GYM['color'], company=GYM['company']))
-CIRCLE = Circle(x='lng', y='lat', size=15, fill_color='col', fill_alpha=0.6, line_color=None)
-PLOT.add_glyph(SOURCE, CIRCLE)
-PLOT.add_tools(PanTool(), WheelZoomTool(), BoxSelectTool(), HoverTool())
-HOVER = PLOT.select_one(HoverTool)
-HOVER.tooltips = [('Company', '@company'), ('Address', '@addr'),
-                  ('Latitude, Longitute', '(@lat, @lng)')]
-output_file('plots/gym.html')
-show(PLOT)
+# save map
+m.save('plots/gym_map.html')
