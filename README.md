@@ -5,3 +5,6 @@ Comparing the geographic distribution of gym locations of two large companies in
 For the interactive plot, click [here](https://nbviewer.jupyter.org/github/Brinkhuis/Gym/blob/master/notebook/geopandas.ipynb).
 
 ![](images/gym_map.png)
+
+
+![](images/heat_map.png)
